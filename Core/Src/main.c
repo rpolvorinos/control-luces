@@ -66,29 +66,18 @@ volatile int button1=0;
 volatile int button2=0;
 volatile int button3=0;
 uint8_t adcval;
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if (GPIO_Pin==GPIO_PIN_0)//LUZ HABITACIÓN
 	{
-		button1=1;
+		button1=1;	//BANDERA HABITACIÓN
 	}
 
-	/*if(GPIO_Pin==GPIO_PIN_2)
-	 * 
-	 * 
-	 * 
+	if(GPIO_Pin==GPIO_PIN_5) // LUZ SALON
 	{
-		HAL_TIM_OC_Start(&htim4,TIM_CHANNEL_2);
-	}*/
-
-	/*if (GPIO_Pin==GPIO_PIN_2)//LUZ SALÓN
-	{
-        button2=1;
+		button2=1;	//BANDERA SALÓN
 	}
-	if (GPIO_Pin==GPIO_PIN_3)//LUZ COCINA
-	{
-	    button3=1;
-	}*/
 }
 
 int debouncer(volatile int* p_flag, GPIO_TypeDef* GPIO_port, uint16_t GPIO_number){
@@ -130,6 +119,9 @@ uint32_t Diferencia=0;
 uint8_t Is_First_Captured=0;
 uint8_t Distancia=0;
 
+
+//int estado=0;
+
 #define TRIG_PIN GPIO_PIN_8
 #define TRIG_PORT GPIOA
 
@@ -164,12 +156,18 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)//SENSOR ULTRASONICO
 			Distancia = Diferencia * .034/2;
 			if(Distancia<100)
 			{
-				HAL_TIM_OC_Start(&htim4, TIM_CHANNEL_2);
+				HAL_TIM_OC_Start(&htim4, TIM_CHANNEL_2);//LED 13
+				//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
 			}
 			if (Distancia>100)
 			{
 				//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
 				HAL_TIM_OC_Stop(&htim4, TIM_CHANNEL_2);
+				/*int tiempo=HAL_GetTick();
+				if (HAL_GetTick()-tiempo>=2000)
+				{
+					HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
+				}*/
 			}
 			Is_First_Captured = 0;
 
@@ -227,6 +225,8 @@ int main(void)
   HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_3);
 
+  int tiempo=HAL_GetTick();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -236,47 +236,61 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  if (debouncer(&button1,GPIOA,GPIO_PIN_0)==1)
+	  /*if (debouncer(&button3,GPIOA,GPIO_PIN_7)==1)
 	  {
-		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-		  HAL_Delay(10);
-	  }
-	  /*if (debouncer(&button2,GPIOA,GPIO_PIN_2)==1)
-	  {
-		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-		  HAL_Delay(10);
-	  }
-	  if (debouncer(&button3,GPIOA,GPIO_PIN_3)==1)
-  	  {
-  		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-  		  HAL_Delay(10);
-  	  }*/
-
-
-	  HAL_ADC_Start(&hadc1);
-	  /*if(HAL_ADC_PollForConversion(&hadc1,100)==HAL_OK){
-		  adcval=HAL_ADC_GetValue(&hadc1);
-		  if(adcval<63){
-			  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,1);
-			  HAL_Delay(10);
+		  //button3=0;
+		  if (estado==1)
+		  {
+			  estado=0;
 		  }
-		  else{
-			  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,0);
+		  else
+		  {
+			  estado=1;
 		  }
-	  }*/
-	  if(HAL_ADC_PollForConversion(&hadc1,100)==HAL_OK)
-	  {
+		  if (estado==2)
+		  {
+			  estado=0;
+		  }
+	   }*/
 
+	  //if (estado==0)
+	  //{
+		  if (debouncer(&button1,GPIOA,GPIO_PIN_0)==1)
+		  	  {
+		  		 HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12); //LUZ HABITACIÓN
+		  		 HAL_Delay(10);
+		  	  }
 
-		  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, HAL_ADC_GetValue(&hadc1)/10);
+		  if (debouncer(&button2,GPIOA,GPIO_PIN_5)==1)
+		  	  {
+		  	  	 HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15); //LUCES SALÓN
+		  	  	 HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_11);
+		  	  	 HAL_Delay(10);
+		  	  }
 
+		  	  /*if (debouncer(&button3,GPIOA,GPIO_PIN_4)==1)
+		  	  	  	  {
+		  	  	  		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		  	  	  		  HAL_Delay(10);
+		  	  	  	  }*/
 
-	  }
-	  HAL_ADC_Stop(&hadc1);
+		  	  HAL_ADC_Start(&hadc1);  //INICIALIZACIÓN
 
-	  HCSR04_Read();
-	  HAL_Delay(200);
+		  	  if(HAL_ADC_PollForConversion(&hadc1,100)==HAL_OK)  //MEDIDA LISTA
+		  	  {
+		  		  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, HAL_ADC_GetValue(&hadc1)/10);  //TEMPORIZADOR PWM
+		  	  }
+		  	  HAL_ADC_Stop(&hadc1);  //PARADA
 
+		  	  HCSR04_Read();
+		  	  HAL_Delay(200);
+
+		  	if (HAL_GetTick()-tiempo>30000)//LUZ AUTOMÁTICA
+		  	{
+		  	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);  //LED
+		  	tiempo=HAL_GetTick();
+		  	}
+	  //}
   }
   /* USER CODE END 3 */
 }
@@ -386,7 +400,6 @@ static void MX_ADC1_Init(void)
   */
 static void MX_TIM2_Init(void)
 {
-
   /* USER CODE BEGIN TIM2_Init 0 */
 
   /* USER CODE END TIM2_Init 0 */
@@ -425,7 +438,6 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 2 */
   HAL_TIM_MspPostInit(&htim2);
-
 }
 
 /**
@@ -498,7 +510,7 @@ static void MX_TIM4_Init(void)
   htim4.Instance = TIM4;
   htim4.Init.Prescaler = 64000;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 20000;
+  htim4.Init.Period = 200;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
@@ -520,8 +532,8 @@ static void MX_TIM4_Init(void)
   {
     Error_Handler();
   }
-  sConfigOC.OCMode = TIM_OCMODE_ACTIVE;
-  sConfigOC.Pulse = 0;
+  sConfigOC.OCMode = TIM_OCMODE_TOGGLE;
+  sConfigOC.Pulse = 500;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_LOW;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   if (HAL_TIM_OC_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
@@ -550,19 +562,19 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_14, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : PA0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  /*Configure GPIO pins : PA0 PA4 PA5 PA7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PD12 PD14 */
-  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_14;
+  /*Configure GPIO pins : PD11 PD12 PD14 PD15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_14|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -578,6 +590,12 @@ static void MX_GPIO_Init(void)
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 }
 
