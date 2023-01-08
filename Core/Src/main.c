@@ -41,6 +41,8 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 
+TIM_HandleTypeDef htim4;
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -49,6 +51,7 @@ ADC_HandleTypeDef hadc1;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -65,14 +68,20 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	{
 		button1=1;
 	}
-	if (GPIO_Pin==GPIO_PIN_2)//LUZ SALÓN
+
+	if(GPIO_Pin==GPIO_PIN_2)
+	{
+		HAL_TIM_OC_Start(&htim4,TIM_CHANNEL_2);
+	}
+
+	/*if (GPIO_Pin==GPIO_PIN_2)//LUZ SALÓN
 	{
         button2=1;
 	}
 	if (GPIO_Pin==GPIO_PIN_3)//LUZ COCINA
 	{
 	    button3=1;
-	}
+	}*/
 }
 
 int debouncer(volatile int* p_flag, GPIO_TypeDef* GPIO_port, uint16_t GPIO_number){
@@ -132,6 +141,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_ADC1_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -148,7 +158,7 @@ int main(void)
 		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 		  HAL_Delay(10);
 	  }
-	  if (debouncer(&button2,GPIOA,GPIO_PIN_2)==1)
+	  /*if (debouncer(&button2,GPIOA,GPIO_PIN_2)==1)
 	  {
 		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
 		  HAL_Delay(10);
@@ -157,13 +167,12 @@ int main(void)
   	  {
   		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
   		  HAL_Delay(10);
-  	  }
+  	  }*/
 
 
 	  HAL_ADC_Start(&hadc1);
 	  if(HAL_ADC_PollForConversion(&hadc1,100)==HAL_OK){
 		  adcval=HAL_ADC_GetValue(&hadc1);
-		  //__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, adcval); //sets the PWM duty cycle (Capture Compare Value)
 		  if(adcval<63){
 			  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,1);
 			  HAL_Delay(10);
@@ -173,7 +182,6 @@ int main(void)
 		  }
 	  }
 	  HAL_ADC_Stop(&hadc1);
-
 
   }
   /* USER CODE END 3 */
@@ -273,6 +281,55 @@ static void MX_ADC1_Init(void)
 }
 
 /**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 16;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 3000;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_OC_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_TIMING;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_OC_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
+  HAL_TIM_MspPostInit(&htim4);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -286,16 +343,16 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : PA0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  /*Configure GPIO pins : PA0 PA2 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_2;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PD12 PD13 PD14 PD15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
+  /*Configure GPIO pins : PD12 PD14 PD15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_14|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
