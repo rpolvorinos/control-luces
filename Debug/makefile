@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := Control_luces
+BUILD_ARTIFACT_NAME := control_de_luces_de_una_vivienda
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-Control_luces.elf \
+control_de_luces_de_una_vivienda.elf \
 
 MAP_FILES += \
-Control_luces.map \
+control_de_luces_de_una_vivienda.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-Control_luces.list \
+control_de_luces_de_una_vivienda.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: Control_luces.elf secondary-outputs
+main-build: control_de_luces_de_una_vivienda.elf secondary-outputs
 
 # Tool invocations
-Control_luces.elf Control_luces.map: $(OBJS) $(USER_OBJS) C:\Users\raulp\Downloads\Control-de-luces-de-una-vivienda-main\Control-de-luces-de-una-vivienda-main\STM32F411VETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Control_luces.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\raulp\Downloads\Control-de-luces-de-una-vivienda-main\Control-de-luces-de-una-vivienda-main\STM32F411VETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Control_luces.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+control_de_luces_de_una_vivienda.elf control_de_luces_de_una_vivienda.map: $(OBJS) $(USER_OBJS) C:\Users\raulp\STM32CubeIDE\workspace_1.11.0\control_de_luces_de_una_vivienda\STM32F411VETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "control_de_luces_de_una_vivienda.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\raulp\STM32CubeIDE\workspace_1.11.0\control_de_luces_de_una_vivienda\STM32F411VETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="control_de_luces_de_una_vivienda.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,14 +70,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-Control_luces.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "Control_luces.list"
+control_de_luces_de_una_vivienda.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "control_de_luces_de_una_vivienda.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) Control_luces.elf Control_luces.list Control_luces.map default.size.stdout
+	-$(RM) control_de_luces_de_una_vivienda.elf control_de_luces_de_una_vivienda.list control_de_luces_de_una_vivienda.map default.size.stdout
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
