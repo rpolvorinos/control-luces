@@ -1528,11 +1528,11 @@ int main(void)
  8001000:	4293      	cmp	r3, r2
  8001002:	d9b4      	bls.n	8000f6e <main+0x3a>
 		  	{
-		  	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+		  		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
  8001004:	f44f 4180 	mov.w	r1, #16384	; 0x4000
  8001008:	4807      	ldr	r0, [pc, #28]	; (8001028 <main+0xf4>)
  800100a:	f001 fbb8 	bl	800277e <HAL_GPIO_TogglePin>
-		  	tiempo=HAL_GetTick();
+		  		tiempo=HAL_GetTick();
  800100e:	f000 fccd 	bl	80019ac <HAL_GetTick>
  8001012:	4603      	mov	r3, r0
  8001014:	607b      	str	r3, [r7, #4]
