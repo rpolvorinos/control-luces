@@ -86,6 +86,33 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	    button4=1;
 	}
 }
+
+int debouncer(volatile int* p_flag, GPIO_TypeDef* GPIO_port, uint16_t GPIO_number){
+	static uint8_t button_count=0;
+	static int count=0;
+
+	if (*p_flag == 1){
+		if (button_count == 0) {
+			count=HAL_GetTick();
+			button_count++;
+		}
+		if (HAL_GetTick()-count>=20){
+			count=HAL_GetTick();
+			if (HAL_GPIO_ReadPin(GPIO_port, GPIO_number)!=1){
+				button_count=1;
+			}
+			else{
+				button_count++;
+			}
+			if (button_count == 4){
+				button_count=0;
+				*p_flag = 0;
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
 /* USER CODE END 0 */
 
 /**
@@ -130,30 +157,14 @@ int main(void)
   {
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
-	  if (button1==1)
+	  if (debouncer(&button1,GPIOA,GPIO_PIN_0)==1)
 	  {
-		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
+		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 		  HAL_Delay(10);
-		  if (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0)==1)
-			  {
-			  	button_count1=2;
-			  }
-		  else
-		  {
-			  button_count1=1;
-		  }
-		  if (button_count1==2)
-		  {
-			  button_count1=0;
-			  flag1=1;
-			  button1=0;
-		  }
 	  }
-	  if (flag1==1)
-	  {
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
-		flag1=0;
-	  }
+
+
+
 	  if (button2==1)
 	  {
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
