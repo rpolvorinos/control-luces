@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "stm32f4xx_hal.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -39,6 +39,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
 
 /* USER CODE BEGIN PV */
 int bandera;
@@ -49,6 +50,7 @@ int l_1;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -73,17 +75,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	{
 		button1=1;
 	}
-	if (GPIO_Pin==GPIO_PIN_1)//LUZ SALÓN
+	if (GPIO_Pin==GPIO_PIN_2)//LUZ SALÓN
 	{
         button2=1;
 	}
-	if (GPIO_Pin==GPIO_PIN_2)//LUZ COCINA
+	if (GPIO_Pin==GPIO_PIN_3)//LUZ COCINA
 	{
 	    button3=1;
-	}
-	if (GPIO_Pin==GPIO_PIN_3)//LUZ BAÑO
-	{
-	    button4=1;
 	}
 }
 
@@ -142,13 +140,11 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
 
-  uint8_t button_count1=0;
-  uint8_t button_count2=0;
-  uint8_t button_count3=0;
-  uint8_t button_count4=0;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -156,87 +152,23 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
 	  if (debouncer(&button1,GPIOA,GPIO_PIN_0)==1)
 	  {
 		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 		  HAL_Delay(10);
 	  }
-
-
-
-	  if (button2==1)
+	  if (debouncer(&button2,GPIOA,GPIO_PIN_2)==1)
 	  {
-		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
+		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
 		  HAL_Delay(10);
-		  if (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_1)==1)
-		  {
-		  	  button_count2=2;
-		  }
-		  else
-		  {
-		  	button_count2=1;
-		  }
-		  if (button_count2==2)
-		  {
-		  	button_count2=0;
-		  	flag2=1;
-		  	button2=0;
-		  }
 	  }
-	  if (flag2==1)
-	  {
-	  	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
-	  	flag2=0;
-	  }
-	  if (button3==1)
-	  {
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
-		HAL_Delay(10);
-		if (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_2)==1)
-		{
-			button_count3=2;
-		}
-		else
-		{
-		  	button_count3=1;
-		}
-		if (button_count3==2)
-		{
-			button_count3=0;
-		  	flag3=1;
-		  	button3=0;
-		}
-	  }
-	  if (flag3==1)
-	  {
-	  	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
-	  	 flag3=0;
-	  }
-	  if (button4==1)
-	  {
-		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
-		  HAL_Delay(10);
-		  if (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_3)==1)
-		  {
-			  button_count4=2;
-		  }
-		  else
-		  {
-			  button_count4=1;
-		  }
-		  if (button_count4==2)
-		  {
-			  button_count4=0;
-			  flag4=1;
-			  button4=0;
-		  }
-	  	  }
-	  	  if (flag4==1)
-	  	  {
-	  	  	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
-	  	  	 flag4=0;
-	  	  }
+	  if (debouncer(&button3,GPIOA,GPIO_PIN_3)==1)
+  	  {
+  		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+  		  HAL_Delay(10);
+  	  }
   }
   /* USER CODE END 3 */
 }
@@ -288,6 +220,58 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+  hadc1.Init.Resolution = ADC_RESOLUTION_8B;
+  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -303,8 +287,8 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PA0 PA1 PA2 PA3 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3;
+  /*Configure GPIO pins : PA0 PA2 PA3 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_2|GPIO_PIN_3;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -319,9 +303,6 @@ static void MX_GPIO_Init(void)
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-
-  HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
   HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI2_IRQn);
