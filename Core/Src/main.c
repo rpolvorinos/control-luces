@@ -66,18 +66,29 @@ volatile int button1=0;
 volatile int button2=0;
 volatile int button3=0;
 uint8_t adcval;
-
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if (GPIO_Pin==GPIO_PIN_0)//LUZ HABITACIÓN
 	{
-		button1=1;	//BANDERA HABITACIÓN
+		button1=1;
 	}
 
-	if(GPIO_Pin==GPIO_PIN_5) // LUZ SALON
+	if(GPIO_Pin==GPIO_PIN_5)
 	{
-		button2=1;	//BANDERA SALÓN
+		//HAL_TIM_OC_Start(&htim4,TIM_CHANNEL_2);
+		button2=1;
 	}
+
+	/*if(GPIO_Pin==GPIO_PIN_4)
+		{
+			//HAL_TIM_OC_Start(&htim4,TIM_CHANNEL_2);
+			button3=1;
+		}*/
+
+	/*if (GPIO_Pin==GPIO_PIN_7)//LUZ COCINA
+	{
+	    button3=1;
+	}*/
 }
 
 int debouncer(volatile int* p_flag, GPIO_TypeDef* GPIO_port, uint16_t GPIO_number){
@@ -257,16 +268,16 @@ int main(void)
 	  //{
 		  if (debouncer(&button1,GPIOA,GPIO_PIN_0)==1)
 		  	  {
-		  		 HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12); //LUZ HABITACIÓN
-		  		 HAL_Delay(10);
+		  		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+		  		  HAL_Delay(10);
 		  	  }
 
-		  if (debouncer(&button2,GPIOA,GPIO_PIN_5)==1)
-		  	  {
-		  	  	 HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15); //LUCES SALÓN
-		  	  	 HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_11);
-		  	  	 HAL_Delay(10);
-		  	  }
+		  	  if (debouncer(&button2,GPIOA,GPIO_PIN_5)==1)
+		  	  	  {
+		  	  		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		  	  		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_11);
+		  	  		  HAL_Delay(10);
+		  	  	  }
 
 		  	  /*if (debouncer(&button3,GPIOA,GPIO_PIN_4)==1)
 		  	  	  	  {
@@ -274,21 +285,34 @@ int main(void)
 		  	  	  		  HAL_Delay(10);
 		  	  	  	  }*/
 
-		  	  HAL_ADC_Start(&hadc1);  //INICIALIZACIÓN
-
-		  	  if(HAL_ADC_PollForConversion(&hadc1,100)==HAL_OK)  //MEDIDA LISTA
+		  	  HAL_ADC_Start(&hadc1);
+		  	  /*if(HAL_ADC_PollForConversion(&hadc1,100)==HAL_OK){
+		  		  adcval=HAL_ADC_GetValue(&hadc1);
+		  		  if(adcval<63){
+		  			  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,1);
+		  			  HAL_Delay(10);
+		  		  }
+		  		  else{
+		  			  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,0);
+		  		  }
+		  	  }*/
+		  	  if(HAL_ADC_PollForConversion(&hadc1,100)==HAL_OK)
 		  	  {
-		  		  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, HAL_ADC_GetValue(&hadc1)/10);  //TEMPORIZADOR PWM
+
+
+		  		  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, HAL_ADC_GetValue(&hadc1)/10);
+
+
 		  	  }
-		  	  HAL_ADC_Stop(&hadc1);  //PARADA
+		  	  HAL_ADC_Stop(&hadc1);
 
 		  	  HCSR04_Read();
 		  	  HAL_Delay(200);
 
-		  	if (HAL_GetTick()-tiempo>30000)//LUZ AUTOMÁTICA
+		  	if (HAL_GetTick()-tiempo>30000)//LUZ AUTOM�?TICA (Se enciende durante el día y se apaga por la noche)
 		  	{
-		  	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);  //LED
-		  	tiempo=HAL_GetTick();
+		  		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+		  		tiempo=HAL_GetTick();
 		  	}
 	  //}
   }
@@ -400,6 +424,7 @@ static void MX_ADC1_Init(void)
   */
 static void MX_TIM2_Init(void)
 {
+
   /* USER CODE BEGIN TIM2_Init 0 */
 
   /* USER CODE END TIM2_Init 0 */
@@ -438,6 +463,7 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 2 */
   HAL_TIM_MspPostInit(&htim2);
+
 }
 
 /**
