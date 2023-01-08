@@ -40,6 +40,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
+
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
@@ -48,7 +49,7 @@ TIM_HandleTypeDef htim4;
 
 /* USER CODE END PV */
 
-/* Private function prototypes  -----------------------------------------------*/
+/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM4_Init(void);
@@ -73,6 +74,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	}
 
 	/*if(GPIO_Pin==GPIO_PIN_2)
+	 * 
+	 * 
+	 * 
 	{
 		HAL_TIM_OC_Start(&htim4,TIM_CHANNEL_2);
 	}*/
@@ -129,6 +133,7 @@ uint8_t Distancia=0;
 #define TRIG_PIN GPIO_PIN_8
 #define TRIG_PORT GPIOA
 
+
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)//SENSOR ULTRASONICO
 {
 	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)  // interruptor en canal 1
@@ -159,12 +164,12 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)//SENSOR ULTRASONICO
 			Distancia = Diferencia * .034/2;
 			if(Distancia<100)
 			{
-				//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
 				HAL_TIM_OC_Start(&htim4, TIM_CHANNEL_2);
 			}
-			else if (Distancia>100)
+			if (Distancia>100)
 			{
-				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
+				//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
+				HAL_TIM_OC_Stop(&htim4, TIM_CHANNEL_2);
 			}
 			Is_First_Captured = 0;
 
