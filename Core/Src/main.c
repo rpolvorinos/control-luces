@@ -58,7 +58,7 @@ static void MX_ADC1_Init(void);
 volatile int button1=0;
 volatile int button2=0;
 volatile int button3=0;
-
+uint8_t adcval;
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if (GPIO_Pin==GPIO_PIN_0)//LUZ HABITACIÓN
@@ -158,6 +158,23 @@ int main(void)
   		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
   		  HAL_Delay(10);
   	  }
+
+
+	  HAL_ADC_Start(&hadc1);
+	  if(HAL_ADC_PollForConversion(&hadc1,100)==HAL_OK){
+		  adcval=HAL_ADC_GetValue(&hadc1);
+		  //__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, adcval); //sets the PWM duty cycle (Capture Compare Value)
+		  if(adcval<63){
+			  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,1);
+			  HAL_Delay(10);
+		  }
+		  else{
+			  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,0);
+		  }
+	  }
+	  HAL_ADC_Stop(&hadc1);
+
+
   }
   /* USER CODE END 3 */
 }
