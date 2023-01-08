@@ -60,8 +60,8 @@ all: main-build
 main-build: Control_luces.elf secondary-outputs
 
 # Tool invocations
-Control_luces.elf Control_luces.map: $(OBJS) $(USER_OBJS) C:\Users\LENOVO\STM32CubeIDE\workspace_1.11.0\Control_luces\STM32F411VETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Control_luces.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\LENOVO\STM32CubeIDE\workspace_1.11.0\Control_luces\STM32F411VETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Control_luces.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Control_luces.elf Control_luces.map: $(OBJS) $(USER_OBJS) C:\Users\raulp\Downloads\Control-de-luces-de-una-vivienda-main\Control-de-luces-de-una-vivienda-main\STM32F411VETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Control_luces.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\raulp\Downloads\Control-de-luces-de-una-vivienda-main\Control-de-luces-de-una-vivienda-main\STM32F411VETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Control_luces.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
