@@ -41,6 +41,7 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 
+TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN PV */
@@ -52,6 +53,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM4_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -110,6 +112,75 @@ int debouncer(volatile int* p_flag, GPIO_TypeDef* GPIO_port, uint16_t GPIO_numbe
 	}
 	return 0;
 }
+
+void delay(uint16_t time)
+{
+	__HAL_TIM_SET_COUNTER(&htim3,0);
+	while (__HAL_TIM_GET_COUNTER (&htim3) < time);
+}
+
+uint32_t Valor1=0;
+uint32_t Valor2=0;
+uint32_t Diferencia=0;
+uint8_t Is_First_Captured=0;
+uint8_t Distancia=0;
+
+#define TRIG_PIN GPIO_PIN_8
+#define TRIG_PORT GPIOA
+
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)//SENSOR ULTRASONICO
+{
+	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)  // interruptor en canal 1
+	{
+		if (Is_First_Captured==0) // si es capturado el primer valor
+		{
+			Valor1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1); // lee valor 1
+			Is_First_Captured = 1;
+			// Cambia a FALLING
+			__HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_1, TIM_INPUTCHANNELPOLARITY_FALLING);
+		}
+
+		else if (Is_First_Captured==1)
+		{
+			Valor2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);  // lee valor 2
+			__HAL_TIM_SET_COUNTER(htim, 0);  // reset counter
+
+			if (Valor2 > Valor1)
+			{
+				Diferencia = Valor2-Valor1;
+			}
+
+			else if (Valor1 > Valor2)
+			{
+				Diferencia = (65535 - Valor1) + Valor2;
+			}
+
+			Distancia = Diferencia * .034/2;
+			if(Distancia<100)
+			{
+				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
+			}
+			if (Distancia>100)
+			{
+				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
+			}
+			Is_First_Captured = 0;
+
+			// Cambia a polaridad en Rising Edge
+			__HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_1, TIM_INPUTCHANNELPOLARITY_RISING);
+			__HAL_TIM_DISABLE_IT(&htim3, TIM_IT_CC1);
+		}
+	}
+}
+
+void HCSR04_Read (void)//LECTURA SENSOR
+{
+	HAL_GPIO_WritePin(TRIG_PORT, TRIG_PIN, GPIO_PIN_SET);  // pull the TRIG pin HIGH
+	HAL_Delay(10);
+	HAL_GPIO_WritePin(TRIG_PORT, TRIG_PIN, GPIO_PIN_RESET);  // pull the TRIG pin low
+
+	__HAL_TIM_ENABLE_IT(&htim3, TIM_IT_CC1);
+}
 /* USER CODE END 0 */
 
 /**
@@ -142,7 +213,10 @@ int main(void)
   MX_GPIO_Init();
   MX_ADC1_Init();
   MX_TIM4_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -183,6 +257,9 @@ int main(void)
 	  }
 	  HAL_ADC_Stop(&hadc1);
 
+	  HCSR04_Read();
+	  HAL_Delay(200);
+
   }
   /* USER CODE END 3 */
 }
@@ -207,7 +284,12 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLN = 100;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = 4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -217,12 +299,12 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
   {
     Error_Handler();
   }
@@ -249,7 +331,7 @@ static void MX_ADC1_Init(void)
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_8B;
   hadc1.Init.ScanConvMode = DISABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
@@ -281,6 +363,17 @@ static void MX_ADC1_Init(void)
 }
 
 /**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+
+}
+
+/**
   * @brief TIM4 Initialization Function
   * @param None
   * @retval None
@@ -299,7 +392,7 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 1 */
   htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 16;
+  htim4.Init.Prescaler = 0;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim4.Init.Period = 3000;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -345,6 +438,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
+
   /*Configure GPIO pins : PA0 PA2 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_2;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
@@ -358,9 +454,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : PA8 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
 
 }
 
